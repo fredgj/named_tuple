@@ -10,11 +10,12 @@ def is_iterable(obj):
         
 def __new__(cls, *args, **kwargs):
     o = OrderedDict()
+    # place kwargs in the same order as fields, if any kwargs
     for f in cls._fields:
         if f in kwargs:
             o[f] = kwargs[f]
     
-    all_args = args + tuple(kwargs.values())
+    all_args = args + tuple(o.values())
     obj = tuple.__new__(cls, all_args)
 
     for attr, val in zip(obj._fields, args):
@@ -73,6 +74,8 @@ if __name__ == '__main__':
     print 'p.y =', p.y
     print p
     print p._asdict()
+    print p[0]
+    print p[1]
     print
     
     Cube = named_tuple('Cube', ('x', 'y', 'z'))
