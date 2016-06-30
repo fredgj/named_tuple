@@ -37,8 +37,8 @@ def __repr__(self):
     values = ', '.join('{0}={1}'.format(key, val) for key,val in items)
     return '{cls}({values})'.format(cls=self.__class__.__name__, values=values)
 
-def count(self, val):
-    pass
+def _asdict(self):
+    return self.__dict__
 
 def named_tuple(typename, field_names, rename=False):
     """Factory function for creating named_tuble classes"""
@@ -58,6 +58,7 @@ def named_tuple(typename, field_names, rename=False):
             '__getnewargs__': __getnewargs__,
             '__dict__': OrderedDict(),
             '__slots__': (),
+            '_asdict': _asdict,
            }
     cls_dict = props.copy()
     cls_dict.update(rest)
@@ -66,16 +67,21 @@ def named_tuple(typename, field_names, rename=False):
 
 
 if __name__ == '__main__':
-    Point = named_tuple('Point', 'y x')
-    p = Point(x=2, y=1)
+    Point = named_tuple('Point', 'x y')
+    p = Point(y=2, x=1)
     print 'p.x =', p.x
     print 'p.y =', p.y
+    print p
+    print p._asdict()
+    print
     
     Cube = named_tuple('Cube', ('x', 'y', 'z'))
     c = Cube(1,2,3)
     print 'c.x =', c.x
     print 'c.y =', c.y
     print 'c.z =', c.z
+    print c
+    print c._asdict()
 
         
 
