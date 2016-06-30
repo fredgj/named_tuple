@@ -1,3 +1,4 @@
+from collections import OrderedDict
 
 def is_iterable(obj):
     try:
@@ -8,28 +9,36 @@ def is_iterable(obj):
   
         
 def __new__(cls, *args, **kwargs):
-    obj = tuple.__new__(cls)
+    o = OrderedDict()
+    for f in cls._fields:
+        if f in kwargs:
+            o[f] = kwargs[f]
+    
+    all_args = args + tuple(kwargs.values())
+    obj = tuple.__new__(cls, all_args)
+
     for attr, val in zip(obj._fields, args):
         obj.__dict__[attr] = val
-    for key, val in kwargs.iteritems():
+
+    for key, val in o.iteritems():
         if key in obj.__dict__:
             raise TypeError("__new__ got multiple values for keyword" + 
                             "argument '{arg}'".format(arg=key))
         obj.__dict__[key] = val
     return obj
- 
-    
-def __setattr__(self, name, _):
-    raise AttributeError("'{cls}' object has no attribute '{name}'".format(
-                    cls=self.__class__.__name__,
-                    name=name))
+                    
+
+def __getnewargs__(self):
+    return tuple(self.__dict__.values())
 
                     
 def __repr__(self):
-    sorted_pairs = sorted(self.__dict__.iteritems(), key=lambda p: p[0])
-    values = ', '.join('{0}={1}'.format(key, val) for key,val in sorted_pairs)
+    items = self.__dict__.iteritems()
+    values = ', '.join('{0}={1}'.format(key, val) for key,val in items)
     return '{cls}({values})'.format(cls=self.__class__.__name__, values=values)
 
+def count(self, val):
+    pass
 
 def named_tuple(typename, field_names, rename=False):
     """Factory function for creating named_tuble classes"""
@@ -45,18 +54,20 @@ def named_tuple(typename, field_names, rename=False):
                                for name in _fields}
     rest = {'_fields': _fields,
             '__new__': __new__,
-            '__setattr__': __setattr__,
-            '__repr__':__repr__,
+            '__repr__': __repr__,
+            '__getnewargs__': __getnewargs__,
+            '__dict__': OrderedDict(),
+            '__slots__': (),
            }
     cls_dict = props.copy()
     cls_dict.update(rest)
     new_cls = type(typename, (tuple,), cls_dict)
     return new_cls
-        
+
 
 if __name__ == '__main__':
-    Point = named_tuple('Point', 'x y')
-    p = Point(y=2, x=1)
+    Point = named_tuple('Point', 'y x')
+    p = Point(x=2, y=1)
     print 'p.x =', p.x
     print 'p.y =', p.y
     
@@ -65,6 +76,7 @@ if __name__ == '__main__':
     print 'c.x =', c.x
     print 'c.y =', c.y
     print 'c.z =', c.z
+
         
 
 
