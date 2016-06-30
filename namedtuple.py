@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+
 def is_iterable(obj):
     try:
         iter(obj)
@@ -38,8 +39,10 @@ def __repr__(self):
     values = ', '.join('{0}={1}'.format(key, val) for key,val in items)
     return '{cls}({values})'.format(cls=self.__class__.__name__, values=values)
 
+
 def _asdict(self):
     return self.__dict__
+
 
 def named_tuple(typename, field_names, rename=False):
     """Factory function for creating named_tuble classes"""
@@ -85,9 +88,4 @@ if __name__ == '__main__':
     print 'c.z =', c.z
     print c
     print c._asdict()
-
-        
-
-
-
 
