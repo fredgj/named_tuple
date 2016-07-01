@@ -17,6 +17,14 @@ def __new__(cls, *args, **kwargs):
             o[f] = kwargs[f]
     
     all_args = args + tuple(o.values())
+    
+    args_len = len(all_args)
+    fields_len = len(cls._fields)
+    if args_len != fields_len:
+        msg = '__new__() takes exactly {0} aguments ({1} given)'
+        msg = msg.format(args_len, fields_len)
+        raise TypeError(msg)
+    
     obj = tuple.__new__(cls, all_args)
 
     for attr, val in zip(obj._fields, args):
@@ -24,8 +32,9 @@ def __new__(cls, *args, **kwargs):
 
     for key, val in o.iteritems():
         if key in obj.__dict__:
-            raise TypeError("__new__ got multiple values for keyword" + 
-                            "argument '{arg}'".format(arg=key))
+            msg = "__new__ got multiple values for keyword argument '{arg}'"
+            msg = msg.format(arg=key)
+            raise TypeError(msg)
         obj.__dict__[key] = val
     return obj
                     
@@ -37,7 +46,8 @@ def __getnewargs__(self):
 def __repr__(self):
     items = self.__dict__.iteritems()
     values = ', '.join('{0}={1}'.format(key, val) for key,val in items)
-    return '{cls}({values})'.format(cls=self.__class__.__name__, values=values)
+    cls = self.__class__.__name__
+    return '{cls}({values})'.format(cls=cls, values=values)
 
 
 def _asdict(self):
@@ -54,17 +64,17 @@ def named_tuple(typename, field_names, rename=False):
         raise TypeError('Argument 2 must support iteration')
         
     # name=name to avoid late binding in closures
-    props = {name: property(lambda self, name=name:self.__dict__[name]) 
+    cls_dict = {name: property(lambda self, name=name:self.__dict__[name]) 
                                for name in _fields}
-    rest = {'_fields': _fields,
+    rest = {'__dict__': OrderedDict(),
+            '__getnewargs__': __getnewargs__,
             '__new__': __new__,
             '__repr__': __repr__,
-            '__getnewargs__': __getnewargs__,
-            '__dict__': OrderedDict(),
             '__slots__': (),
             '_asdict': _asdict,
+            '_fields': _fields,
            }
-    cls_dict = props.copy()
+           
     cls_dict.update(rest)
     new_cls = type(typename, (tuple,), cls_dict)
     return new_cls
