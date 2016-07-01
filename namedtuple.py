@@ -1,3 +1,5 @@
+import keyword
+
 from collections import OrderedDict
 
 
@@ -16,10 +18,10 @@ def __new__(cls, *args, **kwargs):
         if f in kwargs:
             o[f] = kwargs[f]
     
-    all_args = args + tuple(o.values())
-    
+    all_args = args + tuple(o.values())  
     args_len = len(all_args)
     fields_len = len(cls._fields)
+    
     if args_len != fields_len:
         msg = '__new__() takes exactly {0} aguments ({1} given)'
         msg = msg.format(args_len, fields_len)
@@ -54,6 +56,15 @@ def _asdict(self):
     return self.__dict__
 
 
+def check_fieldnames(fields):
+    """checks for invalid fieldnames. Invalid fieldnames are replaced with
+       _<index>"""
+    for i, name in enumerate(fields):
+        if name in keyword.kwlist or name in fields[:i]:
+            fields[i] = '_'+str(i)
+    return fields
+
+
 def named_tuple(typename, field_names, rename=False):
     """Factory function for creating named_tuble classes"""
     if isinstance(field_names, str):
@@ -62,6 +73,9 @@ def named_tuple(typename, field_names, rename=False):
         _fields = field_names
     else:
         raise TypeError('Argument 2 must support iteration')
+        
+    if rename:
+        _fields = check_fieldnames(_fields)
         
     # name=name to avoid late binding in closures
     cls_dict = {name: property(lambda self, name=name:self.__dict__[name]) 
